@@ -1,6 +1,16 @@
 # image-version-maintainer
 Verifies/detects and checks Docker image versions in Compose files
 
+How does this work?
+
+- Detects all `image:` declarations in docker-compose file specified
+- Splits the detection and determines repo, image and version of image
+- NOTE: Currently only supports images tagged with semver versions. 
+  - Will remove v in the beginning of the version if it exists (example repo: library/traefik)
+- Queries specified registry for the list of tags in the repo (dockerhub by default)
+- Compares the version declared in file to the list of tags and returns if there are new versions
+- Can exit 1 if hard version control is defined (--major, --minor or --patch flags) - Primarily for use in CI pipelines
+
 TO DO:
 - Split into better classes 
 - Handle semver version detection better

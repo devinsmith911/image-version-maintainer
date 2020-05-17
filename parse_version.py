@@ -53,7 +53,8 @@ def load_config():
     return True
 
 def authenticate(registry_username, registry_password, registry_org, registry_repo, auth_domain, auth_service, api_domain):
-    auth = HTTPBasicAuth(registry_username, registry_password)
+    if registry_username and registry_password:
+        auth = HTTPBasicAuth(registry_username, registry_password)
     # We need to set these to properly authenticate with registry
     auth_scope = "repository:{}/{}:pull".format(
         registry_org, registry_repo)
@@ -62,7 +63,10 @@ def authenticate(registry_username, registry_password, registry_org, registry_re
     try:
         get_url = ("https://{}/token?service={}&scope={}&offline_token={}&client_id={}".format(
             auth_domain, auth_service, auth_scope, auth_offline_token, auth_client_id))
-        token_request = requests.get(get_url, auth=auth)
+        if registry_username and registry_password:
+            token_request = requests.get(get_url, auth=auth)
+        else:
+            token_request = requests.get(get_url)
         token = (token_request.json()['token'])
     except Exception:
         logging.error("Unable to get authentication token, check registry authentication details and urls")
@@ -73,9 +77,13 @@ def authenticate(registry_username, registry_password, registry_org, registry_re
 def get_tags(registry_org, registry_repo, api_domain, token):
 
     headers = {'Authorization': 'Bearer {}'.format(token)}
-    tags_list = requests.get("https://{}/v2/{}/{}/tags/list".format(
-        api_domain, registry_org, registry_repo), headers=headers)
-    versions = tags_list.json()['tags']
+    try:
+        tags_list = requests.get("https://{}/v2/{}/{}/tags/list".format(
+            api_domain, registry_org, registry_repo), headers=headers)
+        versions = tags_list.json()['tags']
+    except Exception:
+        logging.error("Error retreiving tags list from registry")
+        sys.exit(1)
     return versions
 
 # Write this to parse out versions from compose file
@@ -85,9 +93,8 @@ def load_compose(input_file):
     input_file = os.path.abspath(input_file)
     if (os.path.isfile(input_file)):
         image_list = []
-        a_file = open(input_file)
         logging.info("Loaded compose file: {}".format(input_file))
-        parsed_yaml = yaml.load(a_file)
+        parsed_yaml = yaml.load(open(input_file))
         services = parsed_yaml['services']
         for service in services:
             full_image_tag = (services[service]['image'])
@@ -114,14 +121,26 @@ def parse_image(image):
 
 
 def main():
+    # Set logging
     logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
+
+    # Load images from compose file specified 
     images = load_compose(compose_file)
     
+    # Loop to check image by image
     for image in images:
         logging.info ("Checking if {} is the latest version...".format(image))
+
+        # Parse out image information
         org, repo, version = parse_image(image)
+
+        # Generate token to authenticate call to registry
         token = authenticate(registry_username, registry_password, org, repo, registry_auth_domain, registry_auth_service, registry_api_domain)
+
+        # Get the full list of versions from the tag list
         versions = get_tags(org, repo, registry_api_domain, token)
+
+        # Parse the versions and see if a newer one exists
         parse_versions(version, versions)
     
 

@@ -33,11 +33,14 @@ def parse_versions(version, versions):
         if not new_ver_major and not new_ver_minor and not new_ver_patch:
             logging.info("No new versions available")
 
-#Rework this to be much more robust, it should parse using regex to extract just the version tag
+# Rework this to be much more robust, it should parse using regex to extract just the version tag
+
+
 def strip_chars(version_string):
     stripped = version_string.strip('v')
     stripped = stripped.split('-')[0]
     return stripped
+
 
 def check_exists(version_in, versions):
     for version in versions:
@@ -45,7 +48,7 @@ def check_exists(version_in, versions):
         if semver.VersionInfo.isvalid(version):
             version = semver.VersionInfo.parse(version)
             if version == version_in:
-                logging.info ("New Version detected {}".format(version))
+                logging.info("New Version detected {}".format(version))
                 return True
 
 
@@ -66,10 +69,11 @@ def authenticate(registry_username, registry_password, registry_org, registry_re
             token_request = requests.get(get_url)
         token = (token_request.json()['token'])
     except Exception:
-        logging.error("Unable to get authentication token, check registry authentication details and urls")
+        logging.error(
+            "Unable to get authentication token, check registry authentication details and urls")
         sys.exit(1)
     return token
-    
+
 
 def get_tags(registry_org, registry_repo, api_domain, token):
 
@@ -97,7 +101,7 @@ def load_compose(input_file):
             full_image_tag = (services[service]['image'])
             image_list.append(full_image_tag)
     else:
-        logging.error ("File {} does not exist".format(input_file))
+        logging.error("File {} does not exist".format(input_file))
         sys.exit(1)
 
     return image_list
@@ -121,28 +125,29 @@ def main():
     # Set logging
     logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
 
-    # Load images from compose file specified 
+    # Load images from compose file specified
     images = load_compose(compose_file)
-    
+
     # Loop to check image by image
     for image in images:
-        logging.info ("Checking if {} is the latest version...".format(image))
+        logging.info("Checking if {} is the latest version...".format(image))
 
         # Parse out image information
         org, repo, version = parse_image(image)
 
         # Generate token to authenticate call to registry
-        token = authenticate(registry_username, registry_password, org, repo, registry_auth_domain, registry_auth_service, registry_api_domain)
+        token = authenticate(registry_username, registry_password, org, repo,
+                             registry_auth_domain, registry_auth_service, registry_api_domain)
 
         # Get the full list of versions from the tag list
         versions = get_tags(org, repo, registry_api_domain, token)
 
         # Parse the versions and see if a newer one exists
         parse_versions(version, versions)
-    
+
 
 if __name__ == '__main__':
-    
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--compose-file', action='store',
@@ -180,7 +185,7 @@ if __name__ == '__main__':
     parser.add_argument('--minor', action='store_true',
                         dest='fail_on_minor', default=False, required=False,
                         help='Exit 1 if there is new minor version available')
-    
+
     parser.add_argument('--patch', action='store_true',
                         dest='fail_on_patch', default=False, required=False,
                         help='Exit 1 if there is new patch version available')

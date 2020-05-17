@@ -1,7 +1,7 @@
-# image-version-maintainer
+# Compose Image Version Maintainer
 Verifies/detects and checks Docker image versions in Compose files
 
-How does this work?
+# General Info
 
 - Detects all `image:` declarations in docker-compose file specified
 - Splits the detection and determines repo, image and version of image
@@ -11,10 +11,19 @@ How does this work?
 - Compares the version declared in file to the list of tags and returns if there are new versions
 - Can exit 1 if hard version control is defined (--major, --minor or --patch flags) - Primarily for use in CI pipelines
 
-TO DO:
+# Building
+
+Currently compiling into binary using:
+`pyinstaller main.py -F -n version-maintainer`
+
+# To do:
+
 - Split into better classes 
 - Handle semver version detection better
 - Figure out how to support other versioning styles - some sort of config map?
+
+
+# Flag information
 
 ```
 usage: parse_version.py [-h] --compose-file COMPOSE_FILE

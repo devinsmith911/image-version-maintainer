@@ -36,21 +36,18 @@ def parse_versions(version, versions):
 #Rework this to be much more robust, it should parse using regex to extract just the version tag
 def strip_chars(version_string):
     stripped = version_string.strip('v')
+    stripped = stripped.split('-')[0]
     return stripped
 
 def check_exists(version_in, versions):
     for version in versions:
+        version = strip_chars(version)
         if semver.VersionInfo.isvalid(version):
             version = semver.VersionInfo.parse(version)
             if version == version_in:
                 logging.info ("New Version detected {}".format(version))
                 return True
 
-# Write this to load in map of version configs to use
-
-
-def load_config():
-    return True
 
 def authenticate(registry_username, registry_password, registry_org, registry_repo, auth_domain, auth_service, api_domain):
     if registry_username and registry_password:

@@ -1,0 +1,13 @@
+# This is an example docker-compose file to test the image parsing/version checking of the script
+# For now, image versions need to be full semantic versions
+
+version: '3.6'
+services:
+    couchbase:
+        image: couchbase:6.0.0
+    traefik:
+        image: traefik:1.7.0
+    postgres:
+        image: postgres:9.5.1
+    code-service-test:
+        image: linuxserver/code-server:3.0.0-ls19
